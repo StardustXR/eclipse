@@ -162,11 +162,13 @@ impl RootHandler for Eclipse {
         while let Ok(mouse_event) = self.mouse_event_rx.try_recv() {
             let receivers = self.mouse_pulse_sender.node().receivers();
             let Some((receiver, _field)) = receivers.values().nth(0) else {break};
+            dbg!(&mouse_event);
             mouse_event.send_event(self.mouse_pulse_sender.node(), &[receiver])
         }
         while let Ok(keyboard_event) = self.keyboard_event_rx.try_recv() {
             let receivers = self.keyboard_pulse_sender.node().receivers();
             let Some((receiver, _field)) = receivers.values().nth(0) else {break};
+            dbg!(&keyboard_event);
             keyboard_event.send_event(self.keyboard_pulse_sender.node(), &[receiver])
         }
     }
