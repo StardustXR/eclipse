@@ -219,6 +219,7 @@ dependencies = [
  "stardust-xr-fusion",
  "stardust-xr-molecules",
  "tokio",
+ "xkbcommon",
 ]
 
 [[package]]

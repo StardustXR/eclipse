@@ -10,6 +10,7 @@ use stardust_xr_fusion::client::{Client, FrameInfo, RootHandler};
 use stardust_xr_fusion::core::values::Transform;
 use stardust_xr_fusion::data::{NewReceiverInfo, PulseReceiver, PulseSender, PulseSenderHandler};
 use stardust_xr_fusion::fields::UnknownField;
+use stardust_xr_fusion::node::NodeType;
 use stardust_xr_fusion::HandlerWrapper;
 use stardust_xr_molecules::keyboard::{KeyboardEvent, KEYBOARD_MASK};
 use stardust_xr_molecules::mouse::{MouseEvent, MOUSE_MASK};
@@ -17,6 +18,7 @@ use std::fs::{File, OpenOptions};
 use std::os::unix::{fs::OpenOptionsExt, io::OwnedFd};
 use std::path::Path;
 use tokio::sync::mpsc::Receiver;
+use xkbcommon::xkb::{Context, Keymap};
 
 struct Interface;
 
@@ -51,6 +53,8 @@ async fn main() -> Result<()> {
     tokio::task::spawn_blocking(move || {
         let mut input = Libinput::new_with_udev(Interface);
         input.udev_assign_seat("seat0").unwrap();
+        let keymap =
+            Keymap::new_from_names(&Context::new(0), "evdev", "", "", "", None, 0).unwrap();
         loop {
             if stop_libinput_rx.try_recv().is_ok() {
                 return;
@@ -60,7 +64,7 @@ async fn main() -> Result<()> {
                 match event {
                     input::Event::Keyboard(input::event::KeyboardEvent::Key(k)) => {
                         let event = KeyboardEvent::new(
-                            None,
+                            Some(&keymap),
                             (k.key_state() == KeyState::Released).then(|| vec![k.key()]),
                             (k.key_state() == KeyState::Pressed).then(|| vec![k.key()]),
                         );
@@ -168,6 +172,7 @@ impl RootHandler for Eclipse {
         while let Ok(keyboard_event) = self.keyboard_event_rx.try_recv() {
             let receivers = self.keyboard_pulse_sender.node().receivers();
             let Some((receiver, _field)) = receivers.values().nth(0) else {break};
+            dbg!(&receiver.node().get_path());
             dbg!(&keyboard_event);
             keyboard_event.send_event(self.keyboard_pulse_sender.node(), &[receiver])
         }
