@@ -13,6 +13,7 @@ input = "0.8.2"
 input-event-codes = "5.16.8"
 libc = "0.2.145"
 mint = "0.5.9"
+nix = "0.26.2"
 serde = { version = "1.0.163", features = ["serde_derive"] }
 stardust-xr-fusion = "0.41.0"
 stardust-xr-molecules = "0.26.0"

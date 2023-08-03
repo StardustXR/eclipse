@@ -19,6 +19,8 @@ use std::os::unix::{fs::OpenOptionsExt, io::OwnedFd};
 use std::path::Path;
 use tokio::sync::mpsc::Receiver;
 use xkbcommon::xkb::{Context, Keymap};
+use nix::poll::{poll, PollFd, PollFlags};
+use std::os::fd::AsRawFd;
 
 struct Interface;
 
@@ -53,9 +55,11 @@ async fn main() -> Result<()> {
     tokio::task::spawn_blocking(move || {
         let mut input = Libinput::new_with_udev(Interface);
         input.udev_assign_seat("seat0").unwrap();
+        let pollfd = PollFd::new(input.as_raw_fd(), PollFlags::POLLIN);
+
         let keymap =
             Keymap::new_from_names(&Context::new(0), "evdev", "", "", "", None, 0).unwrap();
-        loop {
+        while poll(&mut [pollfd], -1).is_ok() {
             if stop_libinput_rx.try_recv().is_ok() {
                 return;
             }
